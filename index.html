@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Imposter - Vem är bedragaren?</title>
+    <style>
+        /* --- CSS VARIABLER & GRUNDDESIGN --- */
+        :root {
+            --bg-color: #121212;
+            --surface-color: #1e1e1e;
+            --primary-color: #bb86fc;
+            --secondary-color: #03dac6;
+            --error-color: #cf6679;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --btn-text: #000000;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        #app {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* --- UTILITY CLASSES --- */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .mt-4 { margin-top: 1rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .bold { font-weight: bold; }
+        .text-secondary { color: var(--text-secondary); }
+        .text-error { color: var(--error-color); }
+        .text-accent { color: var(--secondary-color); }
+
+        /* --- CONTAINERS & CARDS --- */
+        .card {
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .role-card {
+            border: 2px dashed var(--primary-color);
+            padding: 30px 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        /* --- TYPOGRAFI --- */
+        h1 { color: var(--primary-color); margin-bottom: 0.5rem; text-align: center; letter-spacing: 1px;}
+        h2 { margin-bottom: 1rem; font-size: 1.5rem; }
+        h3 { margin-bottom: 0.5rem; font-size: 1.2rem; color: var(--secondary-color); }
+        p { line-height: 1.5; margin-bottom: 0.8rem; }
+        
+        .big-word {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin: 10px 0;
+            text-transform: uppercase;
+            word-break: break-word;
+        }
+
+        .imposter-title {
+            font-size: 2rem;
+            color: var(--error-color);
+            font-weight: bold;
+            text-transform: uppercase;
+            animation: pulse 2s infinite;
+        }
+        
+        .win-message {
+            font-size: 2rem;
+            color: var(--error-color);
+            font-weight: 900;
+            text-transform: uppercase;
+            margin: 20px 0;
+            padding: 10px;
+            border: 2px solid var(--error-color);
+            border-radius: 8px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.02); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* --- INPUTS & KNAPPAR --- */
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            background-color: #2c2c2c;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0 20px 0;
+            cursor: pointer;
+        }
+        
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary-color);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-bottom: 10px;
+            color: var(--btn-text); /* Standardknappar har svart text */
+        }
+
+        button:active { opacity: 0.8; transform: scale(0.98); }
+
+        .btn-primary { background-color: var(--primary-color); color: var(--btn-text); }
+        .btn-secondary { background-color: #333; color: var(--text-primary); border: 1px solid #555; }
+        .btn-danger { background-color: var(--error-color); color: white; }
+        
+        /* Fix för röstknappar: Vit text */
+        .btn-vote { 
+            background-color: #2c2c2c; 
+            color: white !important; /* Tvinga vit färg */
+            border: 1px solid var(--primary-color); 
+            margin-bottom: 8px; 
+            text-align: left; 
+        }
+        
+        .input-group { display: flex; gap: 10px; }
+        .input-group button { width: auto; white-space: nowrap; }
+
+        /* --- LISTOR --- */
+        ul { list-style: none; padding: 0; }
+        li {
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        li.eliminated { opacity: 0.5; text-decoration: line-through; background: #2a1a1a; }
+
+        .delete-btn {
+            background: none; color: var(--error-color); border: none; 
+            font-size: 1.2rem; padding: 0 10px; width: auto; margin: 0;
+        }
+
+        /* --- CONFETTI CANVAS --- */
+        #confetti-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 9999;
+        }
+
+        /* --- REGLER BOX --- */
+        .rules-box {
+            background-color: rgba(187, 134, 252, 0.1);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="confetti-canvas"></canvas>
+
+<div id="app">
+    
+    <!-- VY 1: SETUP / START -->
+    <div id="view-setup">
+        <h1>🕵️ Imposter</h1>
+        
+        <div class="rules-box">
+            <h3>Så här spelar du</h3>
+            <p>1. Alla får ett hemligt ord förutom <strong>Imposters</strong> (bedragarna).</p>
+            <p>2. Ge ledtrådar laget runt. Avslöja inte ordet!</p>
+            <p>3. Imposters måste bluffa och låtsas veta ordet.</p>
+            <p>4. Rösta ut den misstänkta. Om bedragarna överlever vinner de!</p>
+        </div>
+
+        <div class="card">
+            <h3>Lägg till spelare</h3>
+            <div class="input-group">
+                <input type="text" id="player-name" placeholder="Namn..." onkeypress="handleEnter(event)">
+                <button class="btn-secondary" onclick="addPlayer()">Lägg till</button>
+            </div>
+            <ul id="player-list"></ul>
+            <div id="setup-error" class="text-error text-center mb-4"></div>
+        </div>
+
+        <div class="card">
+            <h3>Inställningar</h3>
+            <label>Antal Imposters:</label>
+            <input type="number" id="imposter-count" value="1" min="1">
+            
+            <label class="checkbox-wrapper">
+                <input type="checkbox" id="use-theme-toggle">
+                <span>Visa tema/kategori på ordet</span>
+            </label>
+        </div>
+
+        <button class="btn-primary" onclick="startGame()">Starta Spel</button>
+    </div>
+
+    <!-- VY 2: SKICKA ENHETEN (ROLL) -->
+    <div id="view-pass" class="hidden text-center">
+        <h2>Lämna enheten</h2>
+        <p class="text-secondary">Ge enheten till:</p>
+        <h1 id="pass-player-name" class="text-accent">NAMN</h1>
+        <p class="mt-4 mb-4">Se till att ingen annan ser skärmen!</p>
+        <button class="btn-primary" onclick="revealRole()">Visa min roll</button>
+    </div>
+
+    <!-- VY 3: VISA ROLL -->
+    <div id="view-reveal" class="hidden">
+        <h2 class="text-center">Din roll</h2>
+        
+        <div class="role-card" id="role-card-content">
+            <!-- Innehåll genereras med JS -->
+        </div>
+
+        <p class="text-center text-secondary mb-4">Memorera detta. Tryck sen på knappen.</p>
+        <button class="btn-secondary" onclick="nextRole()">Klar / Göm</button>
+    </div>
+
+    <!-- VY 4: SPELRUNDA -->
+    <div id="view-game" class="hidden">
+        <h1>Spelet pågår</h1>
+        
+        <div class="rules-box">
+            <p><strong>Regler:</strong></p>
+            <p>• Yngsta spelaren börjar ge en ledtråd.</p>
+            <p>• Gå laget runt med ledtrådar.</p>
+            <p>• Säg <strong>inte</strong> ordet rakt ut!</p>
+            <p>• Bedragarna försöker smälta in.</p>
+        </div>
+
+        <div class="card">
+            <h3>Spelare i spelet</h3>
+            <ul id="game-player-list"></ul>
+        </div>
+
+        <button class="btn-primary mt-4" onclick="initVoting()">Starta Röstning</button>
+    </div>
+
+    <!-- VY 5: RÖSTNING - SKICKA -->
+    <div id="view-vote-pass" class="hidden text-center">
+        <h2>Dags att rösta</h2>
+        <p>Lämna enheten till:</p>
+        <h1 id="vote-pass-name" class="text-accent">NAMN</h1>
+        <button class="btn-primary mt-4" onclick="showVoteInput()">Jag är redo att rösta</button>
+    </div>
+
+    <!-- VY 6: RÖSTNING - VAL -->
+    <div id="view-vote-input" class="hidden">
+        <h2 class="text-center">Vem vill du rösta ut?</h2>
+        <p class="text-center text-secondary mb-4">Välj den du tror är Imposter.</p>
+        <div id="vote-buttons-container"></div>
+    </div>
+
+    <!-- VY 7: RÖSTNING - PRE-RESULT (NEW) -->
+    <div id="view-vote-pre-result" class="hidden text-center">
+        <h2>Alla har röstat</h2>
+        <p class="text-secondary mb-4">Är ni redo för resultatet?</p>
+        
+        <div id="vote-reveal-wrapper">
+            <button class="btn-primary" id="btn-show-vote-res" onclick="startVoteCountdown()">VISA RÖSTNINGSRESULTAT</button>
+        </div>
+
+        <div id="vote-timer-container" class="hidden">
+            <h1 id="vote-timer" style="font-size: 5rem; color: var(--secondary-color);">5</h1>
+            <p>Räknar rösterna...</p>
+        </div>
+    </div>
+
+    <!-- VY 8: RÖSTNING - RESULTAT -->
+    <div id="view-vote-result" class="hidden text-center">
+        <h2>Röstningen är klar</h2>
+        <div class="card">
+            <p id="vote-result-text" style="font-size: 1.2rem;"></p>
+        </div>
+        
+        <div id="vote-actions">
+            <button class="btn-primary" onclick="continueGame()">Fortsätt spela</button>
+            <button class="btn-secondary" onclick="endGameSequence()">Avsluta och se facit</button>
+        </div>
+    </div>
+
+    <!-- VY 9: FACIT / AVSLUT -->
+    <div id="view-end" class="hidden text-center">
+        <div id="countdown-container">
+            <h1>Spelet avslutas om...</h1>
+            <h1 id="countdown-timer" style="font-size: 4rem;">3</h1>
+        </div>
+
+        <div id="final-reveal" class="hidden">
+            <h1>FACIT</h1>
+            
+            <div id="imposter-win-wrapper" class="hidden">
+                <div class="win-message">IMPOSTERS VANN SPELET!</div>
+            </div>
+
+            <div class="card">
+                <p class="text-secondary">Det hemliga ordet var:</p>
+                <div id="final-word" class="big-word">ORD</div>
+                <p id="final-theme" class="text-accent bold"></p>
+            </div>
+
+            <div class="card" style="border: 1px solid var(--error-color);">
+                <h3>Imposters var:</h3>
+                <div id="final-imposters-list" style="font-size: 1.5rem; font-weight: bold;"></div>
+            </div>
+
+            <div class="card">
+                <h3>Vanliga spelare:</h3>
+                <div id="final-innocents-list" class="text-secondary"></div>
+            </div>
+
+            <button class="btn-primary mt-4" onclick="resetToSetup()">Ny Omgång</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- DATA: ORDLISTA ---
+    const wordData = [
+        // 🍕 Mat & Dryck
+        { word: "Pannkaka", theme: "Mat & Dryck 🍕" }, { word: "Spagetti", theme: "Mat & Dryck 🍕" },
+        { word: "Glass", theme: "Mat & Dryck 🍕" }, { word: "Smörgås", theme: "Mat & Dryck 🍕" },
+        { word: "Korv", theme: "Mat & Dryck 🍕" }, { word: "Potatis", theme: "Mat & Dryck 🍕" },
+        { word: "Ägg", theme: "Mat & Dryck 🍕" }, { word: "Soppa", theme: "Mat & Dryck 🍕" },
+        { word: "Ris", theme: "Mat & Dryck 🍕" }, { word: "Kyckling", theme: "Mat & Dryck 🍕" },
+        { word: "Banan", theme: "Mat & Dryck 🍕" }, { word: "Äpple", theme: "Mat & Dryck 🍕" },
+        { word: "Vindruvor", theme: "Mat & Dryck 🍕" }, { word: "Vattenmelon", theme: "Mat & Dryck 🍕" },
+        { word: "Chips", theme: "Mat & Dryck 🍕" }, { word: "Kex", theme: "Mat & Dryck 🍕" },
+        { word: "Mellanmål", theme: "Mat & Dryck 🍕" }, { word: "Energidryck", theme: "Mat & Dryck 🍕" },
+        { word: "Yoghurt", theme: "Mat & Dryck 🍕" }, { word: "Ost", theme: "Mat & Dryck 🍕" },
+
+        // 📍 Platser
+        { word: "Torg", theme: "Platser 📍" }, { word: "Tunnelbana", theme: "Platser 📍" },
+        { word: "Skog", theme: "Platser 📍" }, { word: "Berg", theme: "Platser 📍" },
+        { word: "Bro", theme: "Platser 📍" }, { word: "Hotell", theme: "Platser 📍" },
+        { word: "Museum", theme: "Platser 📍" }, { word: "Kafé", theme: "Platser 📍" },
+        { word: "Hav", theme: "Platser 📍" }, { word: "Parkering", theme: "Platser 📍" },
+        { word: "Klassrum", theme: "Platser 📍" }, { word: "Vardagsrum", theme: "Platser 📍" },
+        { word: "Balkong", theme: "Platser 📍" }, { word: "Källare", theme: "Platser 📍" },
+        { word: "Tak", theme: "Platser 📍" }, { word: "Kontor", theme: "Platser 📍" },
+        { word: "Stormarknad", theme: "Platser 📍" }, { word: "Busshållplats", theme: "Platser 📍" },
+        { word: "Kyrka", theme: "Platser 📍" }, { word: "Strandpromenad", theme: "Platser 📍" },
+
+        // 💻 Teknik
+        { word: "Router", theme: "Teknik 💻" }, { word: "Surfplatta", theme: "Teknik 💻" },
+        { word: "Högtalare", theme: "Teknik 💻" }, { word: "Smartklocka", theme: "Teknik 💻" },
+        { word: "Mikrofon", theme: "Teknik 💻" }, { word: "Strömkabel", theme: "Teknik 💻" },
+        { word: "Fjärrkontroll", theme: "Teknik 💻" }, { word: "USB-minne", theme: "Teknik 💻" },
+        { word: "Tangentbord", theme: "Teknik 💻" }, { word: "Mus", theme: "Teknik 💻" },
+        { word: "Projektor", theme: "Teknik 💻" }, { word: "Powerbank", theme: "Teknik 💻" },
+        { word: "Bluetooth-högtalare", theme: "Teknik 💻" }, { word: "Headset", theme: "Teknik 💻" },
+        { word: "Skärm", theme: "Teknik 💻" }, { word: "Webbkamera", theme: "Teknik 💻" },
+        { word: "Batteri", theme: "Teknik 💻" }, { word: "Laddare", theme: "Teknik 💻" },
+        { word: "Kablar", theme: "Teknik 💻" }, { word: "Processor", theme: "Teknik 💻" },
+
+        // 🏅 Sport
+        { word: "Basket", theme: "Sport 🏅" }, { word: "Volleyboll", theme: "Sport 🏅" },
+        { word: "Boxning", theme: "Sport 🏅" }, { word: "MMA", theme: "Sport 🏅" },
+        { word: "Pingis", theme: "Sport 🏅" }, { word: "Bowling", theme: "Sport 🏅" },
+        { word: "Handboll", theme: "Sport 🏅" }, { word: "Friidrott", theme: "Sport 🏅" },
+        { word: "Skor", theme: "Sport 🏅" }, { word: "Racket", theme: "Sport 🏅" },
+        { word: "Målbur", theme: "Sport 🏅" }, { word: "Domare", theme: "Sport 🏅" },
+        { word: "Medalj", theme: "Sport 🏅" }, { word: "Gymnastik", theme: "Sport 🏅" },
+        { word: "Bänkpress", theme: "Sport 🏅" }, { word: "Hoppborg", theme: "Sport 🏅" },
+        { word: "Rullskridskor", theme: "Sport 🏅" }, { word: "Snowboard", theme: "Sport 🏅" },
+        { word: "Spurt", theme: "Sport 🏅" }, { word: "Målvakt", theme: "Sport 🏅" },
+
+        // 🐾 Djur
+        { word: "Ko", theme: "Djur 🐾" }, { word: "Gris", theme: "Djur 🐾" },
+        { word: "Get", theme: "Djur 🐾" }, { word: "Räv", theme: "Djur 🐾" },
+        { word: "Panda", theme: "Djur 🐾" }, { word: "Zebra", theme: "Djur 🐾" },
+        { word: "Tiger", theme: "Djur 🐾" }, { word: "Pingvin", theme: "Djur 🐾" },
+        { word: "Björn", theme: "Djur 🐾" }, { word: "Haj", theme: "Djur 🐾" },
+        { word: "Delfin", theme: "Djur 🐾" }, { word: "Groda", theme: "Djur 🐾" },
+        { word: "Sköldpadda", theme: "Djur 🐾" }, { word: "Uggla", theme: "Djur 🐾" },
+        { word: "Råtta", theme: "Djur 🐾" }, { word: "Hamster", theme: "Djur 🐾" },
+        { word: "Apa", theme: "Djur 🐾" }, { word: "Val", theme: "Djur 🐾" },
+        { word: "Örn", theme: "Djur 🐾" },
+
+        // 🚗 Fordon
+        { word: "Motorcykel", theme: "Fordon 🚗" }, { word: "Elbil", theme: "Fordon 🚗" },
+        { word: "Lastbil", theme: "Fordon 🚗" }, { word: "Ambulans", theme: "Fordon 🚗" },
+        { word: "Polisbil", theme: "Fordon 🚗" }, { word: "Traktor", theme: "Fordon 🚗" },
+        { word: "Moped", theme: "Fordon 🚗" }, { word: "Skoter", theme: "Fordon 🚗" },
+        { word: "Segway", theme: "Fordon 🚗" }, { word: "Sparkcykel", theme: "Fordon 🚗" },
+        { word: "Färja", theme: "Fordon 🚗" }, { word: "Helikopter", theme: "Fordon 🚗" },
+        { word: "Jetski", theme: "Fordon 🚗" }, { word: "Tåg", theme: "Fordon 🚗" },
+        { word: "Kabelbil", theme: "Fordon 🚗" }, { word: "Buss", theme: "Fordon 🚗" },
+        { word: "Husbil", theme: "Fordon 🚗" }, { word: "Pickup", theme: "Fordon 🚗" },
+        { word: "Taxi", theme: "Fordon 🚗" }, { word: "BMX-cykel", theme: "Fordon 🚗" },
+
+        // 🎵 Musik
+        { word: "Högtalare", theme: "Musik 🎵" }, { word: "Trumpet", theme: "Musik 🎵" },
+        { word: "Violin", theme: "Musik 🎵" }, { word: "Bas", theme: "Musik 🎵" },
+        { word: "Mixbord", theme: "Musik 🎵" }, { word: "DJ-skiva", theme: "Musik 🎵" },
+        { word: "Kör", theme: "Musik 🎵" }, { word: "Notpapper", theme: "Musik 🎵" },
+        { word: "Trombon", theme: "Musik 🎵" }, { word: "Saxofon", theme: "Musik 🎵" },
+        { word: "Slagverk", theme: "Musik 🎵" }, { word: "Elgitarr", theme: "Musik 🎵" },
+        { word: "Synth", theme: "Musik 🎵" }, { word: "Metronom", theme: "Musik 🎵" },
+        { word: "Trumma", theme: "Musik 🎵" }, { word: "Låt", theme: "Musik 🎵" },
+        { word: "Rytm", theme: "Musik 🎵" }, { word: "Mikrofonstativ", theme: "Musik 🎵" },
+        { word: "Band", theme: "Musik 🎵" }, { word: "Pianostol", theme: "Musik 🎵" },
+
+        // 👕 Kläder
+        { word: "Hoodie", theme: "Kläder 👕" }, { word: "T-shirt", theme: "Kläder 👕" },
+        { word: "Kostym", theme: "Kläder 👕" }, { word: "Shorts", theme: "Kläder 👕" },
+        { word: "Sneakers", theme: "Kläder 👕" }, { word: "Mjukisbyxor", theme: "Kläder 👕" },
+        { word: "Mössa", theme: "Kläder 👕" }, { word: "Handskar", theme: "Kläder 👕" },
+        { word: "Sandaler", theme: "Kläder 👕" }, { word: "Badbyxor", theme: "Kläder 👕" },
+        { word: "Kappa", theme: "Kläder 👕" }, { word: "Skjorta", theme: "Kläder 👕" },
+        { word: "Bälte", theme: "Kläder 👕" }, { word: "Klocka", theme: "Kläder 👕" },
+        { word: "Paraply", theme: "Kläder 👕" }, { word: "Väst", theme: "Kläder 👕" },
+        { word: "Halsduk", theme: "Kläder 👕" }, { word: "Hatt", theme: "Kläder 👕" },
+        { word: "Ryggsäck", theme: "Kläder 👕" }, { word: "Flipflops", theme: "Kläder 👕" },
+
+        // 🏠 Hemmet
+        { word: "Säng", theme: "Hemmet 🏠" }, { word: "Kudde", theme: "Hemmet 🏠" },
+        { word: "Dusch", theme: "Hemmet 🏠" }, { word: "Diskmaskin", theme: "Hemmet 🏠" },
+        { word: "Dammsugare", theme: "Hemmet 🏠" }, { word: "Tandborste", theme: "Hemmet 🏠" },
+        { word: "Filt", theme: "Hemmet 🏠" }, { word: "Gardiner", theme: "Hemmet 🏠" },
+        { word: "Lampa", theme: "Hemmet 🏠" }, { word: "Matta", theme: "Hemmet 🏠" },
+        { word: "Bord", theme: "Hemmet 🏠" }, { word: "Soffa", theme: "Hemmet 🏠" },
+        { word: "Spegel", theme: "Hemmet 🏠" }, { word: "Frys", theme: "Hemmet 🏠" },
+        { word: "Spis", theme: "Hemmet 🏠" }, { word: "Soptunna", theme: "Hemmet 🏠" },
+        { word: "Gaffel", theme: "Hemmet 🏠" }, { word: "Tallrik", theme: "Hemmet 🏠" },
+        { word: "Vattenkokare", theme: "Hemmet 🏠" }, { word: "Papperskorg", theme: "Hemmet 🏠" },
+
+        // 🎒 Skola/Arbete
+        { word: "Penna", theme: "Skola/Arbete 🎒" }, { word: "Blyerts", theme: "Skola/Arbete 🎒" },
+        { word: "Linjal", theme: "Skola/Arbete 🎒" }, { word: "Miniräknare", theme: "Skola/Arbete 🎒" },
+        { word: "Skrivbok", theme: "Skola/Arbete 🎒" }, { word: "Pärm", theme: "Skola/Arbete 🎒" },
+        { word: "Datorvagn", theme: "Skola/Arbete 🎒" }, { word: "Lärare", theme: "Skola/Arbete 🎒" },
+        { word: "Klasskompis", theme: "Skola/Arbete 🎒" }, { word: "Schema", theme: "Skola/Arbete 🎒" },
+        { word: "Kalender", theme: "Skola/Arbete 🎒" }, { word: "Projektor", theme: "Skola/Arbete 🎒" },
+        { word: "Whiteboard", theme: "Skola/Arbete 🎒" }, { word: "Prov", theme: "Skola/Arbete 🎒" },
+        { word: "Uppgift", theme: "Skola/Arbete 🎒" }, { word: "Bänk", theme: "Skola/Arbete 🎒" },
+        { word: "Skåp", theme: "Skola/Arbete 🎒" }, { word: "Namnbricka", theme: "Skola/Arbete 🎒" },
+        { word: "Sax", theme: "Skola/Arbete 🎒" },
+
+        // 🎉 Fest & Nöje
+        { word: "Fyrverkeri", theme: "Fest & Nöje 🎉" }, { word: "Ballong", theme: "Fest & Nöje 🎉" },
+        { word: "Present", theme: "Fest & Nöje 🎉" }, { word: "Tårta", theme: "Fest & Nöje 🎉" },
+        { word: "Diskoboll", theme: "Fest & Nöje 🎉" }, { word: "Karaoke", theme: "Fest & Nöje 🎉" },
+        { word: "Spelkort", theme: "Fest & Nöje 🎉" }, { word: "Tärning", theme: "Fest & Nöje 🎉" },
+        { word: "Popcorn", theme: "Fest & Nöje 🎉" }, { word: "Bio", theme: "Fest & Nöje 🎉" },
+        { word: "Dansgolv", theme: "Fest & Nöje 🎉" }, { word: "DJ", theme: "Fest & Nöje 🎉" },
+        { word: "Glowstick", theme: "Fest & Nöje 🎉" }, { word: "Partyhatt", theme: "Fest & Nöje 🎉" },
+        { word: "Bowling", theme: "Fest & Nöje 🎉" }, { word: "Biljard", theme: "Fest & Nöje 🎉" },
+        { word: "Arkadmaskin", theme: "Fest & Nöje 🎉" }, { word: "Chipskål", theme: "Fest & Nöje 🎉" },
+        { word: "Konfetti", theme: "Fest & Nöje 🎉" }, { word: "Drink", theme: "Fest & Nöje 🎉" },
+
+        // 🌍 Natur
+        { word: "Regn", theme: "Natur 🌍" }, { word: "Sol", theme: "Natur 🌍" },
+        { word: "Vind", theme: "Natur 🌍" }, { word: "Snö", theme: "Natur 🌍" },
+        { word: "Blixt", theme: "Natur 🌍" }, { word: "Storm", theme: "Natur 🌍" },
+        { word: "Träd", theme: "Natur 🌍" }, { word: "Blommor", theme: "Natur 🌍" },
+        { word: "Buske", theme: "Natur 🌍" }, { word: "Flod", theme: "Natur 🌍" },
+        { word: "Sjö", theme: "Natur 🌍" }, { word: "Berg", theme: "Natur 🌍" },
+        { word: "Kulle", theme: "Natur 🌍" }, { word: "Gran", theme: "Natur 🌍" },
+        { word: "Gräs", theme: "Natur 🌍" }, { word: "Sand", theme: "Natur 🌍" },
+        { word: "Moln", theme: "Natur 🌍" }, { word: "Vulkan", theme: "Natur 🌍" },
+        { word: "Måne", theme: "Natur 🌍" }, { word: "Stjärna", theme: "Natur 🌍" },
+
+        // 🧱 Byggnad & Stad
+        { word: "Gatuskylt", theme: "Byggnad & Stad 🧱" }, { word: "Vägbro", theme: "Byggnad & Stad 🧱" },
+        { word: "Rondell", theme: "Byggnad & Stad 🧱" }, { word: "Skyskrapa", theme: "Byggnad & Stad 🧱" },
+        { word: "Garage", theme: "Byggnad & Stad 🧱" }, { word: "Trappa", theme: "Byggnad & Stad 🧱" },
+        { word: "Hiss", theme: "Byggnad & Stad 🧱" }, { word: "Elcentral", theme: "Byggnad & Stad 🧱" },
+        { word: "Staket", theme: "Byggnad & Stad 🧱" }, { word: "Kiosk", theme: "Byggnad & Stad 🧱" },
+        { word: "Tunnel", theme: "Byggnad & Stad 🧱" }, { word: "Fontän", theme: "Byggnad & Stad 🧱" },
+        { word: "Parkbänk", theme: "Byggnad & Stad 🧱" }, { word: "Ljusskylt", theme: "Byggnad & Stad 🧱" },
+        { word: "Tågstation", theme: "Byggnad & Stad 🧱" }, { word: "Flygterminal", theme: "Byggnad & Stad 🧱" },
+        { word: "Hamn", theme: "Byggnad & Stad 🧱" }, { word: "Busskur", theme: "Byggnad & Stad 🧱" },
+        { word: "Idrottshall", theme: "Byggnad & Stad 🧱" }, { word: "Bibliotek", theme: "Byggnad & Stad 🧱" },
+
+        // ⚔️ Spel & Action
+        { word: "Joystick", theme: "Spel & Action ⚔️" }, { word: "Headset", theme: "Spel & Action ⚔️" },
+        { word: "Konsol", theme: "Spel & Action ⚔️" }, { word: "Level", theme: "Spel & Action ⚔️" },
+        { word: "Boss", theme: "Spel & Action ⚔️" }, { word: "Sköld", theme: "Spel & Action ⚔️" },
+        { word: "Svärd", theme: "Spel & Action ⚔️" }, { word: "Pilbåge", theme: "Spel & Action ⚔️" },
+        { word: "Hjälte", theme: "Spel & Action ⚔️" }, { word: "Fiende", theme: "Spel & Action ⚔️" },
+        { word: "Portal", theme: "Spel & Action ⚔️" }, { word: "Trofé", theme: "Spel & Action ⚔️" },
+        { word: "HP (liv)", theme: "Spel & Action ⚔️" }, { word: "Mana", theme: "Spel & Action ⚔️" },
+        { word: "Spawn", theme: "Spel & Action ⚔️" }, { word: "Loot", theme: "Spel & Action ⚔️" },
+        { word: "Arena", theme: "Spel & Action ⚔️" }, { word: "Sniper", theme: "Spel & Action ⚔️" },
+        { word: "Team", theme: "Spel & Action ⚔️" }, { word: "Radar", theme: "Spel & Action ⚔️" },
+
+        // 🧳 Resor
+        { word: "Pass", theme: "Resor 🧳" }, { word: "Bagage", theme: "Resor 🧳" },
+        { word: "Bagageband", theme: "Resor 🧳" }, { word: "Hotellrum", theme: "Resor 🧳" },
+        { word: "Guidning", theme: "Resor 🧳" }, { word: "Turist", theme: "Resor 🧳" },
+        { word: "Kartbok", theme: "Resor 🧳" }, { word: "Resväska", theme: "Resor 🧳" },
+        { word: "Biljett", theme: "Resor 🧳" }, { word: "Solstol", theme: "Resor 🧳" },
+        { word: "Utflykt", theme: "Resor 🧳" }, { word: "Reception", theme: "Resor 🧳" },
+        { word: "Flygstol", theme: "Resor 🧳" }, { word: "Terminal", theme: "Resor 🧳" },
+        { word: "Taxi", theme: "Resor 🧳" }, { word: "Motorväg", theme: "Resor 🧳" },
+        { word: "Nattåg", theme: "Resor 🧳" }, { word: "Vandrarhem", theme: "Resor 🧳" },
+        { word: "Färjeläge", theme: "Resor 🧳" }, { word: "Bagagevagn", theme: "Resor 🧳" }
+    ];
+
+    // --- STATE VARIABLES ---
+    let players = []; // { name: "X", isImposter: false, isOut: false, id: timestamp }
+    let currentWordObj = {};
+    let useTheme = false;
+    let imposterCount = 1;
+    let roleIndex = 0; // För rollvisning
+    let voteIndex = 0; // För röstning
+    let votes = {}; // { "playerID": count }
+    let activeVoters = []; // Lista på spelare som ska rösta
+
+    // --- DOM ELEMENT ---
+    const views = {
+        setup: document.getElementById('view-setup'),
+        pass: document.getElementById('view-pass'),
+        reveal: document.getElementById('view-reveal'),
+        game: document.getElementById('view-game'),
+        votePass: document.getElementById('view-vote-pass'),
+        voteInput: document.getElementById('view-vote-input'),
+        votePreResult: document.getElementById('view-vote-pre-result'),
+        voteResult: document.getElementById('view-vote-result'),
+        end: document.getElementById('view-end')
+    };
+
+    // --- FUNKTIONER: SETUP ---
+
+    function handleEnter(e) {
+        if(e.key === "Enter") addPlayer();
+    }
+
+    function addPlayer() {
+        const input = document.getElementById('player-name');
+        const name = input.value.trim();
+        if (!name) return;
+        
+        if (players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+            document.getElementById('setup-error').innerText = "Namnet finns redan!";
+            return;
+        }
+
+        players.push({
+            id: Date.now() + Math.random(),
+            name: name,
+            isImposter: false,
+            isOut: false
+        });
+        
+        input.value = "";
+        document.getElementById('setup-error').innerText = "";
+        renderSetupList();
+    }
+
+    function removePlayer(id) {
+        players = players.filter(p => p.id !== id);
+        renderSetupList();
+    }
+
+    function renderSetupList() {
+        const list = document.getElementById('player-list');
+        list.innerHTML = "";
+        players.forEach(p => {
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${p.name}</span> <button class="delete-btn" onclick="removePlayer(${p.id})">×</button>`;
+            list.appendChild(li);
+        });
+    }
+
+    function startGame() {
+        const errEl = document.getElementById('setup-error');
+        const countInput = document.getElementById('imposter-count');
+        imposterCount = parseInt(countInput.value);
+        useTheme = document.getElementById('use-theme-toggle').checked;
+
+        if (players.length < 3) {
+            errEl.innerText = "Ni måste vara minst 3 spelare.";
+            return;
+        }
+        if (imposterCount < 1 || imposterCount >= players.length) {
+            errEl.innerText = `Antal imposters måste vara mellan 1 och ${players.length - 1}.`;
+            return;
+        }
+
+        // Nollställ state
+        votes = {};
+        roleIndex = 0;
+        
+        // 1. Välj ord
+        currentWordObj = wordData[Math.floor(Math.random() * wordData.length)];
+
+        // 2. Slumpa roller
+        // Återställ status
+        players.forEach(p => { p.isImposter = false; p.isOut = false; });
+        
+        // Blanda en array av index
+        let indices = players.map((_, i) => i);
+        for (let i = indices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+
+        // Sätt imposters
+        for (let i = 0; i < imposterCount; i++) {
+            players[indices[i]].isImposter = true;
+        }
+
+        // Starta visning
+        updateRolePassScreen();
+        showView('pass');
+    }
+
+    function showView(viewName) {
+        Object.values(views).forEach(el => el.classList.add('hidden'));
+        views[viewName].classList.remove('hidden');
+    }
+
+    // --- FUNKTIONER: ROLLVISNING ---
+
+    function updateRolePassScreen() {
+        const p = players[roleIndex];
+        document.getElementById('pass-player-name').innerText = p.name;
+    }
+
+    function revealRole() {
+        const player = players[roleIndex];
+        const container = document.getElementById('role-card-content');
+        
+        let html = "";
+
+        if (player.isImposter) {
+            html += `<div class="imposter-title">DU ÄR IMPOSTER</div>`;
+            html += `<p class="mt-4">Du vet inte ordet!</p>`;
+            html += `<p>Försök lista ut vad de andra pratar om och bluffa.</p>`;
+            
+            if (useTheme) {
+                html += `<p class="mt-4 text-accent bold">TEMA: ${currentWordObj.theme}</p>`;
+            }
+
+            // Visa andra imposters
+            if (imposterCount > 1) {
+                const others = players.filter(p => p.isImposter && p.name !== player.name).map(p => p.name);
+                html += `<div class="mt-4 p-2" style="background:rgba(200,0,0,0.2); border-radius:4px;">`;
+                html += `<small>DIN MEDBEDRAGARE ÄR:</small><br><strong>${others.join(", ")}</strong>`;
+                html += `</div>`;
+            }
+
+        } else {
+            html += `<h3 class="text-accent">Du är vanlig spelare</h3>`;
+            html += `<p>Ditt hemliga ord är:</p>`;
+            html += `<div class="big-word">${currentWordObj.word}</div>`;
+            if (useTheme) {
+                html += `<p class="text-secondary">Tema: ${currentWordObj.theme}</p>`;
+            }
+        }
+
+        container.innerHTML = html;
+        showView('reveal');
+    }
+
+    function nextRole() {
+        roleIndex++;
+        if (roleIndex < players.length) {
+            updateRolePassScreen();
+            showView('pass');
+        } else {
+            startMainGame();
+        }
+    }
+
+    // --- FUNKTIONER: SPELRUNDA ---
+
+    function startMainGame() {
+        const list = document.getElementById('game-player-list');
+        list.innerHTML = "";
+        players.forEach(p => {
+            if(!p.isOut) {
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="bold">${p.name}</span>`;
+                list.appendChild(li);
+            }
+        });
+        showView('game');
+    }
+
+    // --- FUNKTIONER: RÖSTNING ---
+
+    function initVoting() {
+        votes = {};
+        // Filtrera fram de som är kvar i spelet
+        activeVoters = players.filter(p => !p.isOut);
+        voteIndex = 0;
+        
+        if (activeVoters.length === 0) {
+            alert("Inga spelare kvar? Något gick fel.");
+            return;
+        }
+        
+        updateVotePassScreen();
+        showView('votePass');
+    }
+
+    function updateVotePassScreen() {
+        document.getElementById('vote-pass-name').innerText = activeVoters[voteIndex].name;
+    }
+
+    function showVoteInput() {
+        const currentUser = activeVoters[voteIndex];
+        const container = document.getElementById('vote-buttons-container');
+        container.innerHTML = "";
+
+        // Man får rösta på alla som inte är "out" (även sig själv är tekniskt möjligt, men vi listar alla levande)
+        const targets = players.filter(p => !p.isOut);
+
+        targets.forEach(target => {
+            const btn = document.createElement('button');
+            btn.className = "btn-vote";
+            btn.innerText = `Rösta på: ${target.name}`;
+            btn.onclick = () => castVote(target.id);
+            container.appendChild(btn);
+        });
+
+        showView('voteInput');
+    }
+
+    function castVote(targetId) {
+        if (!votes[targetId]) votes[targetId] = 0;
+        votes[targetId]++;
+        
+        voteIndex++;
+        if (voteIndex < activeVoters.length) {
+            updateVotePassScreen();
+            showView('votePass');
+        } else {
+            // Alla har röstat - Visa Pre-Result skärm
+            prepareVoteResult();
+        }
+    }
+
+    function prepareVoteResult() {
+        showView('votePreResult');
+        // Återställ UI i pre-result
+        document.getElementById('btn-show-vote-res').classList.remove('hidden');
+        document.getElementById('vote-timer-container').classList.add('hidden');
+    }
+
+    function startVoteCountdown() {
+        document.getElementById('btn-show-vote-res').classList.add('hidden');
+        document.getElementById('vote-timer-container').classList.remove('hidden');
+        
+        let count = 5;
+        const timerEl = document.getElementById('vote-timer');
+        timerEl.innerText = count;
+
+        const interval = setInterval(() => {
+            count--;
+            if (count > 0) {
+                timerEl.innerText = count;
+            } else {
+                clearInterval(interval);
+                calculateVoteResult();
+            }
+        }, 1000);
+    }
+
+    function calculateVoteResult() {
+        let maxVotes = 0;
+        let candidates = []; // IDn på de med flest röster
+
+        for (const [pid, count] of Object.entries(votes)) {
+            if (count > maxVotes) {
+                maxVotes = count;
+                candidates = [pid];
+            } else if (count === maxVotes) {
+                candidates.push(pid);
+            }
+        }
+
+        const resultText = document.getElementById('vote-result-text');
+        const actions = document.getElementById('vote-actions');
+
+        if (maxVotes === 0) {
+             resultText.innerText = "Ingen röstade.";
+        } else if (candidates.length > 1) {
+            // Oavgjort
+            resultText.innerHTML = `Det blev oavgjort (${maxVotes} röster var).<br>Ingen åker ut denna runda.`;
+        } else {
+            // Någon åker ut
+            const victimId = candidates[0];
+            const victim = players.find(p => p.id == victimId);
+            
+            if (victim) {
+                victim.isOut = true;
+                resultText.innerHTML = `<strong style="color:var(--error-color)">${victim.name}</strong> har fått flest röster (${maxVotes} st) och är ute ur spelet.`;
+            }
+        }
+
+        showView('voteResult');
+    }
+
+    function continueGame() {
+        startMainGame(); // Uppdaterar listan utan den utröstade
+    }
+
+    // --- FUNKTIONER: SLUTSPEL & FACIT ---
+
+    function endGameSequence() {
+        showView('end');
+        document.getElementById('countdown-container').classList.remove('hidden');
+        document.getElementById('final-reveal').classList.add('hidden');
+        
+        let count = 3;
+        const timerEl = document.getElementById('countdown-timer');
+        timerEl.innerText = count;
+
+        const interval = setInterval(() => {
+            count--;
+            if (count > 0) {
+                timerEl.innerText = count;
+            } else {
+                clearInterval(interval);
+                showFinalReveal();
+            }
+        }, 1000);
+    }
+
+    function showFinalReveal() {
+        document.getElementById('countdown-container').classList.add('hidden');
+        document.getElementById('final-reveal').classList.remove('hidden');
+
+        // Sätt data
+        document.getElementById('final-word').innerText = currentWordObj.word;
+        document.getElementById('final-theme').innerText = useTheme ? `Tema: ${currentWordObj.theme}` : "";
+
+        const imposterNames = players.filter(p => p.isImposter).map(p => p.name);
+        const innocentNames = players.filter(p => !p.isImposter).map(p => p.name);
+
+        const impList = document.getElementById('final-imposters-list');
+        impList.innerHTML = "";
+        imposterNames.forEach(name => {
+            const div = document.createElement('div');
+            div.innerText = name;
+            impList.appendChild(div);
+        });
+
+        document.getElementById('final-innocents-list').innerText = innocentNames.join(", ");
+
+        // Kolla om någon imposter överlevde (!isOut)
+        const anyImposterAlive = players.some(p => p.isImposter && !p.isOut);
+        const winWrapper = document.getElementById('imposter-win-wrapper');
+        
+        if (anyImposterAlive) {
+            // Imposters vann!
+            winWrapper.classList.remove('hidden');
+            triggerConfetti();
+        } else {
+            winWrapper.classList.add('hidden');
+        }
+    }
+
+    function resetToSetup() {
+        stopConfetti();
+        showView('setup');
+    }
+
+    // --- KONFETTI LOGIK (Inbyggd enkel canvas-version) ---
+    let confettiActive = false;
+    let animationId = null;
+    const canvas = document.getElementById('confetti-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function triggerConfetti() {
+        confettiActive = true;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        
+        particles = [];
+        for(let i=0; i<150; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                size: Math.random() * 5 + 2,
+                speedY: Math.random() * 3 + 2,
+                speedX: Math.random() * 2 - 1
+            });
+        }
+        animateConfetti();
+    }
+
+    function animateConfetti() {
+        if (!confettiActive) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            return;
+        }
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        particles.forEach(p => {
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            p.y += p.speedY;
+            p.x += p.speedX;
+
+            if (p.y > canvas.height) p.y = -10;
+        });
+
+        animationId = requestAnimationFrame(animateConfetti);
+    }
+
+    function stopConfetti() {
+        confettiActive = false;
+        cancelAnimationFrame(animationId);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Resize handler för canvas
+    window.addEventListener('resize', () => {
+        if(confettiActive) {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+    });
+
+</script>
+
+</body>
+</html>
